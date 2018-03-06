@@ -22,3 +22,11 @@ public static func callAPIPostWithImage(strUrl: String, parameter: NSDictionary,
    print(error)
   })        
 }
+open static func setAuthorizationHeaderField()
+    {
+        manager = AFHTTPSessionManager(baseURL: URL(string: URL))
+        manager?.requestSerializer.setAuthorizationHeaderFieldWithUsername(LoginUserName, password: Password)
+        manager?.requestSerializer.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        manager?.responseSerializer = AFJSONResponseSerializer(readingOptions: .allowFragments)
+        manager?.responseSerializer.acceptableContentTypes = Set(["application/json", "text/json", "text/javascript", "text/html", "text/plain"])
+    }
