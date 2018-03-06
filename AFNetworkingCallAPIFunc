@@ -1,0 +1,24 @@
+//Get-Post
+public static func callAPIPOST(strUrl: String, parameter: NSDictionary, success: ((NSDictionary) -> Void)?,
+        error: ((NSError) -> Void)?) {    
+        manager?.post(strUrl, parameters: parameter, success: { (opration, response) -> Void in                        
+                        let dict: NSDictionary!
+                        dict = response as! NSDictionary 
+                        success? (dict)                        
+        },failure: { (opration, error) -> Void in            
+            print(error)      
+        })
+}
+
+//For Image Upload
+public static func callAPIPostWithImage(strUrl: String, parameter: NSDictionary, imageData: NSData, parameterName: String, fileName: String, mimeType: String, success: ((NSDictionary) -> Void)?, error: ((NSError) -> Void)? )
+{   
+  manager?.post(strUrl, parameters: parameter, constructingBodyWith: {(formData: AFMultipartFormData?) -> Void in formData?.appendPart(withFileData: imageData as Data!, name: parameterName, fileName: fileName, mimeType: mimeType)
+  }, success: { (opration, response) -> Void in            
+     let dict: NSDictionary!
+     dict = response as! NSDictionary
+     success? (dict)            
+},failure: { (opration, error) -> Void in
+   print(error)
+  })        
+}
