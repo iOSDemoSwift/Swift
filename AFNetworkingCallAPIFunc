@@ -1,4 +1,4 @@
-//Get-Post
+//Get-Post Method use AFNetwoking Libraries
 public static func callAPIPOST(strUrl: String, parameter: NSDictionary, success: ((NSDictionary) -> Void)?,
         error: ((NSError) -> Void)?) {    
         manager?.post(strUrl, parameters: parameter, success: { (opration, response) -> Void in                        
@@ -10,7 +10,7 @@ public static func callAPIPOST(strUrl: String, parameter: NSDictionary, success:
         })
 }
 
-//For Image Upload
+//For Image Upload on server
 public static func callAPIPostWithImage(strUrl: String, parameter: NSDictionary, imageData: NSData, parameterName: String, fileName: String, mimeType: String, success: ((NSDictionary) -> Void)?, error: ((NSError) -> Void)? )
 {   
   manager?.post(strUrl, parameters: parameter, constructingBodyWith: {(formData: AFMultipartFormData?) -> Void in formData?.appendPart(withFileData: imageData as Data!, name: parameterName, fileName: fileName, mimeType: mimeType)
@@ -22,6 +22,8 @@ public static func callAPIPostWithImage(strUrl: String, parameter: NSDictionary,
    print(error)
   })        
 }
+
+//When call Get api that time first call this function after than call get api
 open static func setAuthorizationHeaderField()
     {
         manager = AFHTTPSessionManager(baseURL: URL(string: URL))
