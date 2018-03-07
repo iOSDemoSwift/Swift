@@ -1,0 +1,40 @@
+//Google Signin with Firebase
+import UIKit
+import Firebase
+import FirebaseAuth
+import GoogleSignIn
+
+class GoogleViewController: UIViewController, GIDSignInUIDelegate {    
+    @IBOutlet weak var btnGoogle: GIDSignInButton!    
+    override func viewDidLoad() {
+        super.viewDidLoad()        
+        
+        let googleSignInButton = GIDSignInButton()
+        googleSignInButton.frame = CGRect(x: 20, y: 70, width: view.frame.size.width - 100, height: 40)
+        view.addSubview(googleSignInButton)      
+        
+        GIDSignIn.sharedInstance().uiDelegate = self
+    }
+    
+    @IBAction func GoogleSignIn(_ sender: UIButton) {
+        GIDSignIn.sharedInstance().signIn()
+    }   
+    
+    @IBAction func SignOut(_ sender: UIButton) {
+        guard Auth.auth().currentUser != nil else {
+            return
+        }        
+        let firebaseAuth = Auth.auth()        
+        do
+        {
+            try firebaseAuth.signOut()
+            GIDSignIn.sharedInstance().signOut()
+            GIDSignIn.sharedInstance().disconnect()
+            print("Logout")
+        }
+        catch let signOutError as NSError
+        {
+            print ("Error signing out: %@", signOutError)
+        }
+    }  
+    }
