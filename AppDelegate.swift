@@ -16,6 +16,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, GIDSignInDelegate
         //configure with firebase app
         FirebaseApp.configure()
         
+         UIApplication.shared.statusBarStyle = .lightContent
+         UIApplication.shared.statusBarView?.backgroundColor = DarkPrimaryColor()
+        
         //For Google signin
         GIDSignIn.sharedInstance().clientID = FirebaseApp.app()?.options.clientID
         GIDSignIn.sharedInstance().delegate = self
