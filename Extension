@@ -1,5 +1,3 @@
-bhumika.si016@gmail.com
-
 Animation
 ========
 Bottom -> Top
@@ -139,12 +137,15 @@ extension UIViewController {
 }
 =========================================================================
 SET FONT AND COLOR NAVIGATIONBAR TITILE
-
+————————————————————————
 let attr = [
             NSAttributedStringKey.foregroundColor: UIColor.white,
             NSAttributedStringKey.font: UIFont(name: "Andada", size: 18)! ]
         
         UINavigationBar.appearance().titleTextAttributes = attr
+
+let textAttribute = [NSAttributedStringKey.foregroundColor: UIColor.white]
+        self.navigationController?.navigationBar.titleTextAttributes = textAttribute
 =========================================================================
 extension UIView {
     func roundCorners(_ corners:UIRectCorner, radius: CGFloat) {
@@ -448,4 +449,260 @@ func takeScreenshot(view: UIView) -> UIImage //UIImageView
     }
 
 ====================================================================
+Slow Motion
+——————
+- (void)SlowMotion:(NSURL *)URl
+{
+    AVURLAsset* videoAsset = [AVURLAsset URLAssetWithURL:URl options:nil]; //self.inputAsset;
+    
+    AVAsset *currentAsset = [AVAsset assetWithURL:URl];
+    NSLog(@"%d",[[currentAsset tracksWithMediaType:AVMediaTypeVideo] count]);
+    AVAssetTrack *vdoTrack = [[currentAsset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0];
+    
+    //create mutable composition
+    AVMutableComposition *mixComposition = [AVMutableComposition composition];
+    
+    AVMutableCompositionTrack *compositionVideoTrack = [mixComposition addMutableTrackWithMediaType:AVMediaTypeVideo  	preferredTrackID:kCMPersistentTrackID_Invalid];
+    AVMutableCompositionTrack *compositionAudioTrack = [mixComposition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
+    
+    NSError *videoInsertError = nil;
+    BOOL videoInsertResult = [compositionVideoTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAsset.duration)
+                                                            ofTrack:[[videoAsset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0]
+                                                             atTime:kCMTimeZero
+                                                              error:&videoInsertError];
+    if (!videoInsertResult || nil != videoInsertError) {
+        //handle error
+        return;
+    }
+    
+    NSError *audioInsertError =nil;
+    BOOL audioInsertResult =[compositionAudioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAsset.duration)
+                                                           ofTrack:[[currentAsset tracksWithMediaType:AVMediaTypeAudio] objectAtIndex:0]
+                                                            atTime:kCMTimeZero
+                                                             error:&audioInsertError];
+    
+    if (!audioInsertResult || nil != audioInsertError) {
+        //handle error
+        return;
+    }
+    
+    CMTime duration =kCMTimeZero;
+    duration=CMTimeAdd(duration, currentAsset.duration);
+    //slow down whole video by 2.0
+    double videoScaleFactor = 6.0;
+    CMTime videoDuration = videoAsset.duration;
+    
+    [compositionVideoTrack scaleTimeRange:CMTimeRangeMake(kCMTimeZero, videoDuration)
+                               toDuration:CMTimeMake(videoDuration.value*videoScaleFactor, videoDuration.timescale)];
+    [compositionAudioTrack scaleTimeRange:CMTimeRangeMake(kCMTimeZero, videoDuration)
+                               toDuration:CMTimeMake(videoDuration.value*videoScaleFactor, videoDuration.timescale)];
+    [compositionVideoTrack setPreferredTransform:vdoTrack.preferredTransform];
+    
+    NSArray *dirPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *docsDir = [dirPaths objectAtIndex:0];
+    NSString *outputFilePath = [docsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"slowMotion.mov"]];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:outputFilePath])
+        [[NSFileManager defaultManager] removeItemAtPath:outputFilePath error:nil];
+    NSURL *_filePath = [NSURL fileURLWithPath:outputFilePath];
+    
+    //export
+    AVAssetExportSession* assetExport = [[AVAssetExportSession alloc] initWithAsset:mixComposition
+                                                                         presetName:AVAssetExportPresetLowQuality];
+    assetExport.outputURL=_filePath;
+    assetExport.outputFileType =           AVFileTypeQuickTimeMovie;
+    assetExport.shouldOptimizeForNetworkUse = YES;
+    [assetExport exportAsynchronouslyWithCompletionHandler:^
+     {
+         
+         switch ([assetExport status]) {
+             case AVAssetExportSessionStatusFailed:
+             {
+                 NSLog(@"Export session faiied with error: %@", [assetExport error]);
+                 dispatch_async(dispatch_get_main_queue(), ^{
+                     // completion(nil);
+                 });
+             }
+                 break;
+             case AVAssetExportSessionStatusCompleted:
+             {
+                 
+                 NSLog(@"Successful");
+                 NSURL *outputURL = assetExport.outputURL;
+                 
+                 ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+                 if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:outputURL]) {
+                     
+                     [self writeExportedVideoToAssetsLibrary:outputURL];
+                 }
+                 dispatch_async(dispatch_get_main_queue(), ^{
+                     //                                            completion(_filePath);
+                 });
+                 
+             }
+                 break;
+             default:
+                 
+                 break;
+         }
+     }];
+}
 
+- (void)writeExportedVideoToAssetsLibrary :(NSURL *)url {
+    NSURL *exportURL = url;
+    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+    if ([library videoAtPathIsCompatibleWithSavedPhotosAlbum:exportURL]) {
+        [library writeVideoAtPathToSavedPhotosAlbum:exportURL completionBlock:^(NSURL *assetURL, NSError *error){
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (error) {
+                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[error localizedDescription]
+                                                                        message:[error localizedRecoverySuggestion]
+                                                                       delegate:nil
+                                                              cancelButtonTitle:@"OK"
+                                                              otherButtonTitles:nil];
+                    [alertView show];
+                }
+                if(!error)
+                {
+                    // [activityView setHidden:YES];
+                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Sucess"
+                                                                        message:@"video added to gallery successfully"
+                                                                       delegate:nil
+                                                              cancelButtonTitle:@"OK"
+                                                              otherButtonTitles:nil];
+                    [alertView show];
+                }
+#if !TARGET_IPHONE_SIMULATOR
+                [[NSFileManager defaultManager] removeItemAtURL:exportURL error:nil];
+#endif
+            });
+        }];
+    } else {
+        NSLog(@"Video could not be exported to assets library.");
+    }    
+}
+=========================================================================
+extension UIImageView {
+    //To set image view in round
+    func setRounded() {
+        let radius = (self.frame.width / 2) 
+        self.layer.cornerRadius = radius
+        self.layer.masksToBounds = true
+    }
+}
+=========================================================================
+extension Double {
+    /// Rounds the double to decimal places value
+    func rounded(toPlaces places:Int) -> Double {
+        let divisor = pow(10.0, Double(places))
+        return (self * divisor).rounded() / divisor
+    }
+}
+=========================================================================
+extension Date {
+    func dayOfWeek() -> String? {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "EEEE"
+        return dateFormatter.string(from: self).capitalized
+        // or use capitalized(with: locale) if you want
+    }
+}
+=========================================================================
+extension UISearchBar {
+    func removeBackgroundImageView(){
+        if let view:UIView = self.subviews.first {
+            for curr in view.subviews {
+                guard let searchBarBackgroundClass = NSClassFromString("UISearchBarBackground") else {
+                    return
+                }
+                if curr.isKind(of:searchBarBackgroundClass){
+                    if let imageView = curr as? UIImageView{
+                        imageView.removeFromSuperview()
+                        break
+                    }
+                }
+            }
+        }
+    }
+}
+=========================================================================
+extension UIViewController {
+    //to show toast message
+    func showToast(message : String) {
+        let toastLabel = UILabel(frame: CGRect(x: self.view.frame.size.width/2 - ((self.view.frame.size.width - 20)/2), y: self.view.frame.size.height-100, width: self.view.frame.size.width - 20, height: 35))
+        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        toastLabel.textColor = UIColor.white
+        toastLabel.textAlignment = .center;
+        toastLabel.font = UIFont(name: "Gotham-Book", size: 12.0)
+        toastLabel.text = message
+        toastLabel.alpha = 1.0
+        toastLabel.layer.cornerRadius = 10;
+        toastLabel.clipsToBounds  =  true
+        self.view.addSubview(toastLabel)
+        UIView.animate(withDuration: 4.0, delay: 2.0, options: .curveEaseOut, animations: {
+            toastLabel.alpha = 0.0
+        }, completion: {(isCompleted) in
+            toastLabel.removeFromSuperview()
+        })
+    }
+}
+=========================================================================
+extension UITableViewCell {
+    
+    func hideSeparator() {
+        self.separatorInset = UIEdgeInsets(top: 0, left: self.bounds.size.width, bottom: 0, right: 0)
+    }
+    
+    func showSeparator() {
+        self.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+    }
+}
+=========================================================================
+extension UIImage {
+    func resizeImageWith(newSize: CGSize) -> UIImage {
+        
+        let horizontalRatio = newSize.width / size.width
+        let verticalRatio = newSize.height / size.height
+        
+        let ratio = max(horizontalRatio, verticalRatio)
+        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
+        UIGraphicsBeginImageContextWithOptions(newSize, true, 0)
+        draw(in: CGRect(origin: CGPoint(x: 0, y: 0), size: newSize))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return newImage!
+    }
+    enum JPEGQuality: CGFloat {
+        case lowest  = 0
+        case low     = 0.25
+        case medium  = 0.5
+        case high    = 0.75
+        case highest = 1
+    }
+    
+    /// Returns the data for the specified image in JPEG format.
+    /// If the image object’s underlying image data has been purged, calling this function forces that data to be reloaded into memory.
+    /// - returns: A data object containing the JPEG data, or nil if there was a problem generating the data. This function may return nil if the image has no data or if the underlying CGImageRef contains data in an unsupported bitmap format.
+    func jpeg(_ quality: JPEGQuality) -> Data? {
+        return UIImageJPEGRepresentation(self, quality.rawValue)
+    }
+}
+=========================================================================
+extension NSMutableData {
+    
+    func appendString(string: String) {
+        let data = string.data(using: String.Encoding.utf8, allowLossyConversion: true)
+        append(data!)
+    }
+}
+=========================================================================
+extension FeedbackViewController {
+    func hideKeyboardWhenTappedAround() {
+        let tap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(FeedbackViewController.dismissKeyboard))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+    }
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
+    }
+}
