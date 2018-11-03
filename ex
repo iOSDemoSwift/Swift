@@ -17,6 +17,7 @@ ws@@2015
 
 Make .PEM File
 ----------------
+Open KeyChain-> select Certificate(Dist/Dev) -> Export -> save .p12
 cd
 cd Desktop
 openssl pkcs12 -in nameofp12.p12 -out abc.pem -nodes -clcerts
@@ -1352,6 +1353,35 @@ extension Bundle {
         return infoDictionary?["CFBundleVersion"] as? String
     }
 }
+====================================================================================
+extension String
+{
+    //Start Remove Whitespace
+    func whiteSpacesRemoved() -> String
+    {
+        return self.filter { $0 != Character(" ") }
+    }
+    //End
+}
+====================================================================================
+Filter dictionary of array get key match array index
+—————————————————————————
+let name = searchArray[indexPath.section][indexPath.row]
+let arr = UserDefaults.standard.object(forKey: "arrPeople") as! [[String:Any]]
+let arrFilter = arr.filter{$0["name"] as! String == name}
+let dic = arrFilter[0] as NSDictionary
+let fName = (dic["firstName"] as? String)!
+if fName.contains(" ")
+{
+      let name = fName.components(separatedBy: " ")
+      tag = (name[0] as? String)!
+}
+else
+{
+       tag = fName
+}
+print(arrFilter, tag)
+====================================================================================
 
 
 
