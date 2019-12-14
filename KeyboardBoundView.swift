@@ -1,4 +1,4 @@
-//
+//  Swift 5.1
 //  KeyboardBoundView.swift
 //
 //  Created 14/12/19.
@@ -27,3 +27,15 @@ extension UIView {
         })
     }
 }
+
+
+//How to Use
+/*
+
+which screen you want to scroll screen when input by textfiled Like Chat Screen
+
+=> viewdidload -> self.view.bindToKeyboard()
+-> self.chatText.resignFirstResponder()
+ 
+
+*/
