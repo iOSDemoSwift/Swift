@@ -1,10 +1,6 @@
 //
 //  TabBarHeight.swift
-//  APITabDemo
-//
-//  Created by Piyush Chodvadiya on 17/03/20.
-//  Copyright © 2020 Asd. All rights reserved.
-//
+
 
 import Foundation
 import UIKit
