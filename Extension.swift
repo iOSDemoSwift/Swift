@@ -162,6 +162,8 @@ extension ViewController: OpalImagePickerControllerDelegate {
                 arrImageOrVideo.append(asset)
             }
         }
+	    
+	assetToData()
     }
 
 func assetToData() {
@@ -201,4 +203,59 @@ func assetToData() {
             
         }
     }
+	
+  func cellForRow(index: Int) {
+        if arrImageOrVideo.count > 0 {
+            let width = (UIScreen.main.bounds.width - 15) / 3
+            let asset = arrImageOrVideo[index] as? PHAsset
+            
+            if asset?.mediaType == .image {
+                PHImageManager.default().requestImage(for: asset!, targetSize: CGSize(width: width, height: width), contentMode: PHImageContentMode.aspectFit, options: nil) { (image, userInfo) -> Void in
+                    
+                    cell.imgProduct.image = image
+                    cell.imgPlay.isHidden = asset!.mediaType == PHAssetMediaType.image ? true : false
+                }
+            } else {
+                if let strUrl = arrImageOrVideo[indexPath.row] as? String {
+                    cell.imgProduct.sd_setImage(with: URL(string: strUrl), placeholderImage: placeholderImage, options: .refreshCached)
+                }
+            }
+        }
+    }
+	
+	
+//Delete Image from array
+    var imageName = ""
+    @objc func deleteImageAndVideo(_ sender: UIButton) {
+        if self.arrImageOrVideo.count > sender.tag {
+            self.getNameFromArray(index: sender.tag) { (name) in
+                self.imageName = name
+            }
+        }
+    }
+    
+   private func getNameFromArray(index: Int, completion: @escaping (_ name: String) -> Void) {
+       let asset = arrImageOrVideo[index] as? PHAsset
+       
+       if asset?.mediaType == .image {
+           asset!.requestContentEditingInput(with: PHContentEditingInputRequestOptions(), completionHandler: { (contentEditingInput, _) in
+               if let strURL = (contentEditingInput!.audiovisualAsset as? AVURLAsset)?.url.absoluteString {
+                   let strName: String = self.getStringSplitArray(str: strURL, separator: "/")
+                   completion(strName)
+               }
+           })
+       } else {
+           if let strURL = arrImageOrVideo[index] as? String {
+               let strName: String = self.getStringSplitArray(str: strURL, separator: "/")
+               completion(strName)
+           }
+       }
+   }
+   
+   func getStringSplitArray(str: String, separator: Character) -> String {
+       let arr = str.split(separator: separator)
+       let strName: String = String(arr[arr.count - 1])
+       
+       return strName
+   }
 }
