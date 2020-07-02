@@ -149,4 +149,56 @@ extension UIColor
         return UIColor(rgb: 0x0488d1, a: 1)
     }
 	
-	
+
+// MARK: - OpalImagePickerControllerDelegate
+var arrImageOrVideo = [Any]()
+
+extension ViewController: OpalImagePickerControllerDelegate {
+    func imagePicker(_ picker: OpalImagePickerController, didFinishPickingAssets assets: [PHAsset]) {
+        dismiss(animated: true, completion: nil)
+        for asset in assets {
+            // Add PHAsset
+            if asset.mediaType == .image {
+                arrImageOrVideo.append(asset)
+            }
+        }
+    }
+
+func assetToData() {
+        var imagesData = [Data]()
+        let dispatchGroup = DispatchGroup()
+        //showLoader()
+        for item in arrImageOrVideo {
+            // Enter in disptach
+            dispatchGroup.enter()
+            
+            if let phAsset = item as? PHAsset {
+                // get data
+                if phAsset.mediaType == .image {        // It's image
+                    phAsset.requestContentEditingInput(with: PHContentEditingInputRequestOptions(), completionHandler: { (contentEditingInput, _) in
+                        if let imageURL = contentEditingInput?.fullSizeImageURL {
+                            do {
+                                let data = try Data(contentsOf: imageURL)
+                                imagesData.append(data)
+                            } catch let error {
+                                print(error.localizedDescription)
+                            }
+                        }
+                        
+                        dispatchGroup.leave()
+                        
+                    })
+                } else {
+                    dispatchGroup.leave()
+                }
+            } else {
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            // Upload your data to the server
+            
+        }
+    }
+}
